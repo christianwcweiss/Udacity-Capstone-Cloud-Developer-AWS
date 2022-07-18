@@ -1,11 +1,6 @@
 org: christianwcweiss
 service: serverless-todo-app
 
-plugins:
-  - serverless-iam-roles-per-function
-  - serverless-plugin-tracing
-  - serverless-plugin-typescript
-  - serverless-webpack
 
 
 provider:
