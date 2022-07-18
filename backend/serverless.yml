@@ -1,6 +1,13 @@
-org: christianwcweiss
 service: serverless-todo-app
 
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+plugins:
+  - serverless-webpack
+  - serverless-iam-roles-per-function
 
 
 provider:
