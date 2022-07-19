@@ -1,39 +1,52 @@
 import 'source-map-support/register'
 
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import {
+  APIGatewayProxyEvent,
+  APIGatewayProxyHandler,
+  APIGatewayProxyResult
+} from 'aws-lambda'
 import * as middy from 'middy'
-import { cors, httpErrorHandler } from 'middy/middlewares'
+import { cors } from 'middy/middlewares'
+import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
+import { updateTodoItem } from '../../logic/todoLogic'
+import { getUserId } from '../utils'
+import { createLogger } from '../../utils/logger'
 
-import {TodoUpdate} from "../../models/TodoUpdate";
-import {HEADERS} from "./statics";
-import {updateTodo} from "../../helpers/todos";
+const logger = createLogger('updateTodo')
 
-export const handler = middy(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const todoId = event.pathParameters.todoId;
-  const updateData: TodoUpdate = JSON.parse(event.body);
+const updateTodoHandler: APIGatewayProxyHandler = async function (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  logger.info('Update of todo started:', event)
 
-  try {
-    await updateTodo(event, todoId, updateData);
+  const userId = getUserId(event)
+  const todoId = event.pathParameters?.todoId
+  const updateTodoRequest = JSON.parse(event.body || '') as UpdateTodoRequest
+
+  if (!todoId) {
     return {
-      statusCode: 204,
-      headers: HEADERS,
-      body: undefined
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      headers: HEADERS,
-      body: JSON.stringify({ error })
-    };
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Invalid todo id' })
+    }
   }
-  }
-)
 
-handler
-  .use(httpErrorHandler())
-  .use(
-    cors({
-      credentials: true
-    })
-  )
+  const updated = await updateTodoItem(userId, todoId, updateTodoRequest)
+  if (!updated) {
+    logger.info('Todo item does not exist', { userId, todoId })
+    return {
+      statusCode: 404,
+      body: JSON.stringify({
+        error: 'Todo item does not exist'
+      })
+    }
+  }
+
+  logger.info('Todo item was updated', { userId, todoId })
+
+  return {
+    statusCode: 200,
+    body: ''
+  }
+}
+
+export const handler = middy(updateTodoHandler).use(cors({ credentials: true }))

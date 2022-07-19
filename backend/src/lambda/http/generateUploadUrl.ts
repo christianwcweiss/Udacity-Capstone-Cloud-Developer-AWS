@@ -1,37 +1,54 @@
 import 'source-map-support/register'
 
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  APIGatewayProxyHandler
+} from 'aws-lambda'
 import * as middy from 'middy'
-import { cors, httpErrorHandler } from 'middy/middlewares'
+import { cors } from 'middy/middlewares'
+import { getAttachmentUploadUrl } from '../../logic/todoLogic'
+import { getUserId } from '../utils'
+import { createLogger } from '../../utils/logger'
 
-import {HEADERS} from "./statics";
-import {generateUploadUrl} from "../../helpers/todos";
+const logger = createLogger('generateUploadUrl')
 
-export const handler = middy(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
- const todoId = event.pathParameters.todoId;
+export const generateUploadUrlHandler: APIGatewayProxyHandler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  logger.info('Generating of upload URL started', event)
 
-  try {
-    const signedUrl: string = await generateUploadUrl(event, todoId);
+  const userId = getUserId(event)
+  const todoId = event.pathParameters?.todoId
+
+  if (!todoId) {
     return {
-      statusCode: 201,
-        headers: HEADERS,
-        body: JSON.stringify({ uploadUrl: signedUrl })
-    };
-  } catch (error) {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Invalid todo id' })
+    }
+  }
+
+  const uploadUrl = await getAttachmentUploadUrl(userId, todoId)
+  if (!uploadUrl) {
+    logger.info('The Todo item does not exist', { userId, todoId })
     return {
-      statusCode: 500,
-        headers: HEADERS,
-      body: JSON.stringify({ error })
-    };
+      statusCode: 404,
+      body: JSON.stringify({
+        error: 'The Todo item does not exist'
+      })
+    }
   }
+
+  logger.info('File upload url generated', { userId, todoId, uploadUrl })
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ uploadUrl })
   }
+}
+
+export const handler = middy(generateUploadUrlHandler).use(
+  cors({
+    credentials: true
+  })
 )
-
-handler
-  .use(httpErrorHandler())
-  .use(
-    cors({
-      credentials: true
-    })
-  )

@@ -1,45 +1,34 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import 'source-map-support/register'
+
+import {
+  APIGatewayProxyEvent,
+  APIGatewayProxyHandler,
+  APIGatewayProxyResult
+} from 'aws-lambda'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
-import {HEADERS} from "./statics";
-import {TodoItem} from "../../models/TodoItem";
-import {createTodo} from "../../helpers/todos";
-import {TodoCreate} from "../../models/TodoCreate";
-import {checkForExpiration} from "../auth/auth0Authorizer";
+import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
+import { createTodoItem } from '../../logic/todoLogic'
+import { getUserId } from '../utils'
+import { createLogger } from '../../utils/logger'
 
-export const handler = middy(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const newTodoBody: TodoCreate = JSON.parse(event.body)
+const logger = createLogger('createTodo')
 
-    if (!newTodoBody) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify("Wrong body sent to the request.")
-        }
-    }
-    try {
-        const newTodo: TodoItem = await createTodo(event, newTodoBody);
+const createTodoHandler: APIGatewayProxyHandler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  logger.info('Create of Todo in Progress:', event)
 
-      await checkForExpiration(event.headers.Authorization)
+  const userId = getUserId(event)
+  const createTodoRequest = JSON.parse(event.body || '') as CreateTodoRequest
+  const item = await createTodoItem(userId, createTodoRequest)
 
-        return {
-            statusCode: 201,
-            headers: HEADERS,
-            body: JSON.stringify({ newTodo })
-        };
-    } catch (error) {
-        return {
-            statusCode: 500,
-            headers: HEADERS,
-            body: JSON.stringify({ error })
-        };
-    }
+  logger.info('Todo item was created successfully', { userId, todoId: item.todoId })
+
+  return {
+    statusCode: 201,
+    body: JSON.stringify({ item })
   }
-)
+}
 
-handler.use(
-  cors({
-    credentials: true
-  })
-)
+export const handler = middy(createTodoHandler).use(cors({ credentials: true }))
