@@ -6,22 +6,22 @@ import {
 } from 'aws-lambda'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
-import { TodoItem } from '../../models/TodoItem'
-import { getAllTodoItems } from '../../logic/todoLogic'
+import { NoteItem } from '../../models/noteItem'
+import { getAllNoteItems } from '../../logic/noteLogic'
 import { getUserId } from '../utils'
 import { createLogger } from '../../utils/logger'
 
-const logger = createLogger('getTodos')
+const logger = createLogger('getnotes')
 
-const getTodosHandler: APIGatewayProxyHandler = async (
+const getNotesHandler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  logger.info('Getting of todos started', event)
+  logger.info('Getting of notes started', event)
 
   const userId = getUserId(event)
-  const items: TodoItem[] = await getAllTodoItems(userId)
+  const items: NoteItem[] = await getAllNoteItems(userId)
 
-  logger.info('Todo items fetched', { userId, count: items.length })
+  logger.info('Note items fetched', { userId, count: items.length })
 
   return {
     statusCode: 200,
@@ -29,4 +29,4 @@ const getTodosHandler: APIGatewayProxyHandler = async (
   }
 }
 
-export const handler = middy(getTodosHandler).use(cors({ credentials: true }))
+export const handler = middy(getNotesHandler).use(cors({ credentials: true }))

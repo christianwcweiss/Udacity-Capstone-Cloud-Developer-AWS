@@ -1,4 +1,4 @@
-service:  serverless-todo-app
+service:  serverless-note-app
 
 custom:
   webpack:
@@ -22,9 +22,9 @@ provider:
 
   environment:
     JWKS_URL: https://dev-1x060-89.us.auth0.com/.well-known/jwks.json
-    TODO_DYNAMO_TABLE: TodoItems-${self:provider.stage}
-    TODO_ID_DYNAMO_INDEX: TodoIdIndex
-    FILES_S3_BUCKET: serverless-todo-app-bucket-658616507787-${self:provider.stage}
+    note_DYNAMO_TABLE: noteItems-${self:provider.stage}
+    note_ID_DYNAMO_INDEX: noteIdIndex
+    FILES_S3_BUCKET: serverless-note-app-bucket-658616507787-${self:provider.stage}
     FILE_UPLOAD_URL_EXPIRATION: 300
     FILE_DOWNLOAD_URL_EXPIRATION: 604800
 
@@ -32,94 +32,94 @@ functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
-  GetTodos:
-    handler: src/lambda/http/getTodos.handler
+  Getnotes:
+    handler: src/lambda/http/getnotes.handler
     events:
       - http:
           method: get
-          path: todos
+          path: notes
           cors: true
           authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
       - Effect: Allow
         Action:
           - s3:HeadObject
           - s3:GetObject
         Resource: arn:aws:s3:::${self:provider.environment.FILES_S3_BUCKET}/*
 
-  CreateTodo:
-    handler: src/lambda/http/createTodo.handler
+  Createnote:
+    handler: src/lambda/http/createnote.handler
     events:
       - http:
           method: post
-          path: todos
+          path: notes
           cors: true
           authorizer: Auth
           request:
             schema:
-              application/json: ${file(models/create-todo-request.json)}
+              application/json: ${file(models/create-note-model.json)}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
 
-  UpdateTodo:
-    handler: src/lambda/http/updateTodo.handler
+  Updatenote:
+    handler: src/lambda/http/updatenote.handler
     events:
       - http:
           method: patch
-          path: todos/{todoId}
+          path: notes/{noteId}
           cors: true
           authorizer: Auth
           request:
             schema:
-              application/json: ${file(models/update-todo-request.json)}
+              application/json: ${file(models/update-note-model.json)}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_DYNAMO_TABLE}/index/${self:provider.environment.TODO_ID_DYNAMO_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}/index/${self:provider.environment.note_ID_DYNAMO_INDEX}
 
-  DeleteTodo:
-    handler: src/lambda/http/deleteTodo.handler
+  Deletenote:
+    handler: src/lambda/http/deletenote.handler
     events:
       - http:
           method: delete
-          path: todos/{todoId}
+          path: notes/{noteId}
           cors: true
           authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:DeleteItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_DYNAMO_TABLE}/index/${self:provider.environment.TODO_ID_DYNAMO_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}/index/${self:provider.environment.note_ID_DYNAMO_INDEX}
 
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
       - http:
           method: post
-          path: todos/{todoId}/attachment
+          path: notes/{noteId}/attachment
           cors: true
           authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_DYNAMO_TABLE}/index/${self:provider.environment.TODO_ID_DYNAMO_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}/index/${self:provider.environment.note_ID_DYNAMO_INDEX}
       - Effect: Allow
         Action:
           - s3:PutObject
@@ -127,10 +127,10 @@ functions:
 
 resources:
   Resources:
-    TodoItemsDynamoDBTable:
+    noteItemsDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.environment.TODO_DYNAMO_TABLE}
+        TableName: ${self:provider.environment.note_DYNAMO_TABLE}
         BillingMode: PAY_PER_REQUEST
 
         AttributeDefinitions:
@@ -138,7 +138,7 @@ resources:
             AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
-          - AttributeName: todoId
+          - AttributeName: noteId
             AttributeType: S
 
         KeySchema:
@@ -148,11 +148,11 @@ resources:
             KeyType: RANGE
 
         LocalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.TODO_ID_DYNAMO_INDEX}
+          - IndexName: ${self:provider.environment.note_ID_DYNAMO_INDEX}
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
-              - AttributeName: todoId
+              - AttributeName: noteId
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL

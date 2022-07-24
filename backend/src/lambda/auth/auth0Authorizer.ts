@@ -11,7 +11,7 @@ const logger = createLogger('auth')
 
 const jwksUrl = 'https://dev-1x060-89.us.auth0.com/.well-known/jwks.json'
 
-// With help from https://github.com/yesenarman/udacity-serverless-todo-app/blob/761ece226d941bfd8af369c6f22c64e3be48704e/backend/src/lambda/auth/auth0Authorizer.ts
+// With help from https://github.com/yesenarman/udacity-serverless-note-app/blob/761ece226d941bfd8af369c6f22c64e3be48704e/backend/src/lambda/auth/auth0Authorizer.ts
 export const handler = async (
   event: CustomAuthorizerEvent
 ): Promise<CustomAuthorizerResult> => {

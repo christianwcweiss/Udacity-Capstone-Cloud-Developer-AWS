@@ -21,16 +21,16 @@ export class FilesAccess {
     )
   ) {}
 
-  async fileExists(todoId: string): Promise<boolean> {
+  async fileExists(noteId: string): Promise<boolean> {
     try {
       logger.info('Checking if the file exists in', {
         Bucket: this.filesBucket,
-        Key: todoId
+        Key: noteId
       })
       const headObject = await this.s3Client
         .headObject({
           Bucket: this.filesBucket,
-          Key: todoId
+          Key: noteId
         })
         .promise()
       logger.info('Head object exists', { headObject })
@@ -41,18 +41,18 @@ export class FilesAccess {
     }
   }
 
-  getUploadUrl(todoId: string) {
+  getUploadUrl(noteId: string) {
     return this.s3Client.getSignedUrl('putObject', {
       Bucket: this.filesBucket,
-      Key: todoId,
+      Key: noteId,
       Expires: this.uploadUrlExpiration
     })
   }
 
-  getDownloadUrl(todoId: string) {
+  getDownloadUrl(noteId: string) {
     return this.s3Client.getSignedUrl('getObject', {
       Bucket: this.filesBucket,
-      Key: todoId,
+      Key: noteId,
       Expires: this.downloadUrlExpiration
     })
   }

@@ -7,7 +7,7 @@ import {
 } from 'aws-lambda'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
-import { getAttachmentUploadUrl } from '../../logic/todoLogic'
+import { getAttachmentUploadUrl } from '../../logic/noteLogic'
 import { getUserId } from '../utils'
 import { createLogger } from '../../utils/logger'
 
@@ -19,27 +19,27 @@ export const generateUploadUrlHandler: APIGatewayProxyHandler = async (
   logger.info('Generating of upload URL started', event)
 
   const userId = getUserId(event)
-  const todoId = event.pathParameters?.todoId
+  const noteId = event.pathParameters?.noteId
 
-  if (!todoId) {
+  if (!noteId) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid todo id' })
+      body: JSON.stringify({ error: 'Invalid note id' })
     }
   }
 
-  const uploadUrl = await getAttachmentUploadUrl(userId, todoId)
+  const uploadUrl = await getAttachmentUploadUrl(userId, noteId)
   if (!uploadUrl) {
-    logger.info('The Todo item does not exist', { userId, todoId })
+    logger.info('The note item does not exist', { userId, noteId })
     return {
       statusCode: 404,
       body: JSON.stringify({
-        error: 'The Todo item does not exist'
+        error: 'The note item does not exist'
       })
     }
   }
 
-  logger.info('File upload url generated', { userId, todoId, uploadUrl })
+  logger.info('File upload url generated', { userId, noteId, uploadUrl })
 
   return {
     statusCode: 200,

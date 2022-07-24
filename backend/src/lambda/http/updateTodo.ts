@@ -7,41 +7,41 @@ import {
 } from 'aws-lambda'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
-import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
-import { updateTodoItem } from '../../logic/todoLogic'
+import { UpdateNoteRequest } from '../../requests/UpdateNoteRequest'
+import { updateNoteItem } from '../../logic/noteLogic'
 import { getUserId } from '../utils'
 import { createLogger } from '../../utils/logger'
 
-const logger = createLogger('updateTodo')
+const logger = createLogger('updatenote')
 
-const updateTodoHandler: APIGatewayProxyHandler = async function (
+const updateNoteHandler: APIGatewayProxyHandler = async function (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
-  logger.info('Update of todo started:', event)
+  logger.info('Update of note started:', event)
 
   const userId = getUserId(event)
-  const todoId = event.pathParameters?.todoId
-  const updateTodoRequest = JSON.parse(event.body || '') as UpdateTodoRequest
+  const noteId = event.pathParameters?.noteId
+  const updateNoteRequest = JSON.parse(event.body || '') as UpdateNoteRequest
 
-  if (!todoId) {
+  if (!noteId) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid todo id' })
+      body: JSON.stringify({ error: 'Invalid note id' })
     }
   }
 
-  const updated = await updateTodoItem(userId, todoId, updateTodoRequest)
+  const updated = await updateNoteItem(userId, noteId, updateNoteRequest)
   if (!updated) {
-    logger.info('Todo item does not exist', { userId, todoId })
+    logger.info('Note item does not exist', { userId, noteId })
     return {
       statusCode: 404,
       body: JSON.stringify({
-        error: 'Todo item does not exist'
+        error: 'Note item does not exist'
       })
     }
   }
 
-  logger.info('Todo item was updated', { userId, todoId })
+  logger.info('Note item was updated', { userId, noteId })
 
   return {
     statusCode: 200,
@@ -49,4 +49,4 @@ const updateTodoHandler: APIGatewayProxyHandler = async function (
   }
 }
 
-export const handler = middy(updateTodoHandler).use(cors({ credentials: true }))
+export const handler = middy(updateNoteHandler).use(cors({ credentials: true }))
