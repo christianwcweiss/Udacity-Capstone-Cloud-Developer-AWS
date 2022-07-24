@@ -9,7 +9,7 @@ enum UploadState {
   UploadingFile,
 }
 
-interface EditnoteProps {
+interface EditNoteProps {
   match: {
     params: {
       noteId: string
@@ -18,16 +18,16 @@ interface EditnoteProps {
   auth: Auth
 }
 
-interface EditnoteState {
+interface EditNoteState {
   file: any
   uploadState: UploadState
 }
 
-export class Editnote extends React.PureComponent<
-  EditnoteProps,
-  EditnoteState
+export class EditNote extends React.PureComponent<
+  EditNoteProps,
+  EditNoteState
 > {
-  state: EditnoteState = {
+  state: EditNoteState = {
     file: undefined,
     uploadState: UploadState.NoUpload
   }

@@ -22,8 +22,8 @@ provider:
 
   environment:
     JWKS_URL: https://dev-1x060-89.us.auth0.com/.well-known/jwks.json
-    note_DYNAMO_TABLE: noteItems-${self:provider.stage}
-    note_ID_DYNAMO_INDEX: noteIdIndex
+    NOTE_DYNAMO_TABLE: noteItems-${self:provider.stage}
+    NOTE_ID_DYNAMO_INDEX: noteIdIndex
     FILES_S3_BUCKET: serverless-note-app-bucket-658616507787-${self:provider.stage}
     FILE_UPLOAD_URL_EXPIRATION: 300
     FILE_DOWNLOAD_URL_EXPIRATION: 604800
@@ -32,8 +32,8 @@ functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
-  Getnotes:
-    handler: src/lambda/http/getnotes.handler
+  GetNotes:
+    handler: src/lambda/http/getNotes.handler
     events:
       - http:
           method: get
@@ -44,15 +44,15 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NOTE_DYNAMO_TABLE}
       - Effect: Allow
         Action:
           - s3:HeadObject
           - s3:GetObject
         Resource: arn:aws:s3:::${self:provider.environment.FILES_S3_BUCKET}/*
 
-  Createnote:
-    handler: src/lambda/http/createnote.handler
+  CreateNote:
+    handler: src/lambda/http/createNote.handler
     events:
       - http:
           method: post
@@ -66,10 +66,10 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NOTE_DYNAMO_TABLE}
 
-  Updatenote:
-    handler: src/lambda/http/updatenote.handler
+  UpdateNote:
+    handler: src/lambda/http/updateNote.handler
     events:
       - http:
           method: patch
@@ -83,14 +83,14 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NOTE_DYNAMO_TABLE}
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}/index/${self:provider.environment.note_ID_DYNAMO_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NOTE_DYNAMO_TABLE}/index/${self:provider.environment.NOTE_ID_DYNAMO_INDEX}
 
-  Deletenote:
-    handler: src/lambda/http/deletenote.handler
+  DeleteNote:
+    handler: src/lambda/http/deleteNote.handler
     events:
       - http:
           method: delete
@@ -101,11 +101,11 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:DeleteItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NOTE_DYNAMO_TABLE}
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}/index/${self:provider.environment.note_ID_DYNAMO_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NOTE_DYNAMO_TABLE}/index/${self:provider.environment.NOTE_ID_DYNAMO_INDEX}
 
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
@@ -119,7 +119,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.note_DYNAMO_TABLE}/index/${self:provider.environment.note_ID_DYNAMO_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NOTE_DYNAMO_TABLE}/index/${self:provider.environment.NOTE_ID_DYNAMO_INDEX}
       - Effect: Allow
         Action:
           - s3:PutObject
@@ -130,7 +130,7 @@ resources:
     noteItemsDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.environment.note_DYNAMO_TABLE}
+        TableName: ${self:provider.environment.NOTE_DYNAMO_TABLE}
         BillingMode: PAY_PER_REQUEST
 
         AttributeDefinitions:
@@ -148,7 +148,7 @@ resources:
             KeyType: RANGE
 
         LocalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.note_ID_DYNAMO_INDEX}
+          - IndexName: ${self:provider.environment.NOTE_ID_DYNAMO_INDEX}
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH

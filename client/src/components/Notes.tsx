@@ -14,55 +14,52 @@ import {
   Loader
 } from 'semantic-ui-react'
 
-import { createnote, deletenote, getnotes, patchnote } from '../api/notes-api'
+import { createNote, deleteNote, getNotes, patchNote } from '../api/notes-api'
 import Auth from '../auth/Auth'
-import { note } from '../types/Note'
+import { Note } from '../types/Note'
 
-interface notesProps {
+interface NotesProps {
   auth: Auth
   history: History
 }
 
-interface notesState {
-  notes: note[]
-  newnoteName: string
-  loadingnotes: boolean
+interface NotesState {
+  notes: Note[]
+  newNoteTitle: string
+  newNoteDescription: string
+  loadingNotes: boolean
 }
 
-export class notes extends React.PureComponent<notesProps, notesState> {
-  state: notesState = {
+export class Notes extends React.PureComponent<NotesProps, NotesState> {
+  state: NotesState = {
     notes: [],
-    newnoteName: '',
-    loadingnotes: true
-  }
-
-  handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ newnoteName: event.target.value })
+    newNoteTitle: '',
+    newNoteDescription: '',
+    loadingNotes: true
   }
 
   onEditButtonClick = (noteId: string) => {
     this.props.history.push(`/notes/${noteId}/edit`)
   }
 
-  onNoteCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
+  onNoteCreate = async () => {
     try {
-      const dueDate = this.calculateDueDate()
-      const newnote = await createnote(this.props.auth.getIdToken(), {
-        name: this.state.newnoteName,
-        dueDate
+      const newNote = await createNote(this.props.auth.getIdToken(), {
+        title: this.state.newNoteTitle,
+        description: this.state.newNoteDescription
       })
       this.setState({
-        notes: [...this.state.notes, newnote],
-        newnoteName: ''
+        notes: [...this.state.notes, newNote],
+        newNoteTitle: ''
       })
     } catch {
       alert('note creation failed')
     }
   }
 
-  onnoteDelete = async (noteId: string) => {
+  onNoteDelete = async (noteId: string) => {
     try {
-      await deletenote(this.props.auth.getIdToken(), noteId)
+      await deleteNote(this.props.auth.getIdToken(), noteId)
       this.setState({
         notes: this.state.notes.filter(note => note.noteId !== noteId)
       })
@@ -71,27 +68,13 @@ export class notes extends React.PureComponent<notesProps, notesState> {
     }
   }
 
-  onnoteCheck = async (pos: number) => {
-    try {
-      const note = this.state.notes[pos]
-      await patchnote(this.props.auth.getIdToken(), note.noteId, {
-        title: note.title,
-        description: note.description,
-      })
-      this.setState({
-        notes: update(this.state.notes, {})
-      })
-    } catch {
-      alert('note deletion failed')
-    }
-  }
 
   async componentDidMount() {
     try {
-      const notes = await getnotes(this.props.auth.getIdToken())
+      const notes = await getNotes(this.props.auth.getIdToken())
       this.setState({
         notes,
-        loadingnotes: false
+        loadingNotes: false
       })
     } catch (e) {
       alert(`Failed to fetch notes: ${e}`)
@@ -103,30 +86,42 @@ export class notes extends React.PureComponent<notesProps, notesState> {
       <div>
         <Header as="h1">notes</Header>
 
-        {this.renderCreatenoteInput()}
+        {this.renderCreateNoteInput()}
 
-        {this.rendernotes()}
+        {this.renderNotes()}
       </div>
     )
   }
 
-  renderCreatenoteInput() {
+  handleTitleChange= (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ newNoteTitle: event.target.value })
+  }
+
+    handleDescriptionChange= (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ newNoteDescription: event.target.value })
+  }
+
+  renderCreateNoteInput() {
     return (
       <Grid.Row>
         <Grid.Column width={16}>
           <Input
-            action={{
-              color: 'teal',
-              labelPosition: 'left',
-              icon: 'add',
-              content: 'New task',
-              onClick: this.onNoteCreate
-            }}
             fluid
             actionPosition="left"
-            placeholder="To change the world..."
-            onChange={this.handleNameChange}
+            placeholder="Your title..."
+            onChange={this.handleTitleChange}
           />
+        </Grid.Column>
+        <Grid.Column width={16}>
+          <Input
+            fluid
+            actionPosition="left"
+            placeholder="Your description..."
+            onChange={this.handleDescriptionChange}
+          />
+        </Grid.Column>
+        <Grid.Column width={16}>
+          <Button onClick={() =>this.onNoteCreate()} >{"Submit new Note"}</Button>
         </Grid.Column>
         <Grid.Column width={16}>
           <Divider />
@@ -135,12 +130,12 @@ export class notes extends React.PureComponent<notesProps, notesState> {
     )
   }
 
-  rendernotes() {
-    if (this.state.loadingnotes) {
+  renderNotes() {
+    if (this.state.loadingNotes) {
       return this.renderLoading()
     }
 
-    return this.rendernotesList()
+    return this.renderNotesList()
   }
 
   renderLoading() {
@@ -153,7 +148,7 @@ export class notes extends React.PureComponent<notesProps, notesState> {
     )
   }
 
-  rendernotesList() {
+  renderNotesList() {
     return (
       <Grid padded>
         {this.state.notes.map((note, pos) => {
@@ -178,7 +173,7 @@ export class notes extends React.PureComponent<notesProps, notesState> {
                 <Button
                   icon
                   color="red"
-                  onClick={() => this.onnoteDelete(note.noteId)}
+                  onClick={() => this.onNoteDelete(note.noteId)}
                 >
                   <Icon name="delete" />
                 </Button>
@@ -196,10 +191,4 @@ export class notes extends React.PureComponent<notesProps, notesState> {
     )
   }
 
-  calculateDueDate(): string {
-    const date = new Date()
-    date.setDate(date.getDate() + 7)
-
-    return dateFormat(date, 'yyyy-mm-dd') as string
-  }
 }

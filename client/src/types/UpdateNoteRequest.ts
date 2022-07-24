@@ -1,5 +1,4 @@
-export interface UpdatenoteRequest {
-  name: string
-  dueDate: string
-  done: boolean
+export interface UpdateNoteRequest {
+  title: string
+  description: string
 }

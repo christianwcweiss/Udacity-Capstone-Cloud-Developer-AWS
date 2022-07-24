@@ -10,8 +10,8 @@ import { NoteUpdate } from '../models/NoteUpdate'
 export class NoteItemsAccess {
   constructor(
     private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
-    private readonly notesDynamoTable = process.env.NOTES_DYNAMO_TABLE || '',
-    private readonly notesIdDynamoIndex = process.env.NOTES_ID_DYNAMO_INDEX || ''
+    private readonly notesDynamoTable = process.env.NOTE_DYNAMO_TABLE || '',
+    private readonly notesIdDynamoIndex = process.env.NOTE_ID_DYNAMO_INDEX || ''
   ) {}
 
   async getAllNoteItems(userId: string): Promise<NoteItem[]> {
@@ -34,10 +34,10 @@ export class NoteItemsAccess {
         TableName: this.notesDynamoTable,
         IndexName: this.notesIdDynamoIndex,
         ConsistentRead: true,
-        KeyConditionExpression: 'userId = :userId and notesId = :noteId',
+        KeyConditionExpression: 'userId = :userId and noteId = :noteId',
         ExpressionAttributeValues: {
           ':userId': userId,
-          ':NoteId': noteId
+          ':noteId': noteId
         }
       })
       .promise()
@@ -65,12 +65,12 @@ export class NoteItemsAccess {
     NotesId: string,
     update: NoteUpdate
   ): Promise<boolean> {
-    const NotesItem = await this.findItemById(userId, NotesId)
-    if (!NotesItem) {
+    const notesItem = await this.findItemById(userId, NotesId)
+    if (!notesItem) {
       return false
     }
 
-    const createdAt = NotesItem.createdAt
+    const createdAt = notesItem.createdAt
 
     if (!update.title || update.title === "") {
       throw new Error()
@@ -87,7 +87,7 @@ export class NoteItemsAccess {
           ':description': update.description,
         },
         ExpressionAttributeNames: {
-          '#itemName': 'name'
+          '#itemTitle': 'title'
         }
       })
       .promise()

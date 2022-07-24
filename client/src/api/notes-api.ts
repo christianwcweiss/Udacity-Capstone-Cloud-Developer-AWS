@@ -1,10 +1,10 @@
 import { apiEndpoint } from '../config'
-import { note } from '../types/note';
-import { CreatenoteRequest } from '../types/CreatenoteRequest';
+import { Note } from '../types/Note';
+import { CreateNoteRequest } from '../types/CreateNoteRequest';
 import Axios from 'axios'
-import { UpdatenoteRequest } from '../types/UpdatenoteRequest';
+import { UpdateNoteRequest } from '../types/UpdateNoteRequest';
 
-export async function getnotes(idToken: string): Promise<note[]> {
+export async function getNotes(idToken: string): Promise<Note[]> {
   console.log('Fetching notes')
 
   const response = await Axios.get(`${apiEndpoint}/notes`, {
@@ -17,10 +17,10 @@ export async function getnotes(idToken: string): Promise<note[]> {
   return response.data.items
 }
 
-export async function createnote(
+export async function createNote(
   idToken: string,
-  newnote: CreatenoteRequest
-): Promise<note> {
+  newnote: CreateNoteRequest
+): Promise<Note> {
   const response = await Axios.post(`${apiEndpoint}/notes`,  JSON.stringify(newnote), {
     headers: {
       'Content-Type': 'application/json',
@@ -30,12 +30,12 @@ export async function createnote(
   return response.data.item
 }
 
-export async function patchnote(
+export async function patchNote(
   idToken: string,
   noteId: string,
-  updatednote: UpdatenoteRequest
+  updatedNote: UpdateNoteRequest
 ): Promise<void> {
-  await Axios.patch(`${apiEndpoint}/notes/${noteId}`, JSON.stringify(updatednote), {
+  await Axios.patch(`${apiEndpoint}/notes/${noteId}`, JSON.stringify(updatedNote), {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${idToken}`
@@ -43,7 +43,7 @@ export async function patchnote(
   })
 }
 
-export async function deletenote(
+export async function deleteNote(
   idToken: string,
   noteId: string
 ): Promise<void> {
